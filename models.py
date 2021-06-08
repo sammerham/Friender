@@ -39,7 +39,7 @@ class Match(db.Model) :
 
 
 class View(db.Model) :
-    """Connection of a viwer <-> viewed_user."""
+    """Connection of a viewer <-> viewed_user."""
 
     __tablename__ = 'views'
 
@@ -55,7 +55,7 @@ class View(db.Model) :
         primary_key=True,
     )
 
-
+# TODO add model methods
 class User(db.Model) :
     """User in the system."""
     __tablename__ = 'users'
@@ -63,12 +63,6 @@ class User(db.Model) :
     id = db.Column(
         db.Integer,
         primary_key=True,
-    )
-
-    email = db.Column(
-        db.Text,
-        nullable=False,
-        unique=True,
     )
 
     username = db.Column(
@@ -84,35 +78,29 @@ class User(db.Model) :
 
     firstname = db.Column(
         db.Text,
-        nullable=False,
-        unique=True,
+        nullable=False,   
     )
     
     lastname = db.Column(
         db.Text,
         nullable=False,
-        unique=True,
     )
     zipcode = db.Column(
         db.Text,
         nullable=False,
-        unique=True,
     )
 
     radius = db.Column(
         db.Integer,
         nullable=False,
-        unique=True,
     )
+
     hobbies = db.Column(
         db.Text,
-        nullable=False,
-        unique=True,
     )
+
     interests = db.Column(
         db.Text,
-        nullable=False,
-        unique=True,
     )
 
     image_url = db.Column(  #TODO figure out how to use AWS to store image
@@ -162,3 +150,74 @@ class User(db.Model) :
         primaryjoin=(Match.match_to_id == id),
         secondaryjoin=(Match.match_from_id== id)
     )
+
+    def __repr__(self):
+        return f"""<User #{self.id}: {self.username}, {self.firstname}, 
+        {self.lastname}, {self.zipcode}>"""
+        
+
+    def is_liked_by(self, other_user):
+        """Is this user liked by `other_user`?"""
+
+        found_user_list = [
+            user for user in self.likers if user == other_user]
+        return len(found_user_list) == 1
+
+    def is_liking(self, other_user):
+        """Is this user liking `other_use`?"""
+
+        found_user_list = [
+            user for user in self.liking if user == other_user]
+        return len(found_user_list) == 1
+
+    @classmethod
+    def signup(cls, username, password, image_url, firstname, lastname, zipcode, radius ):
+        """Sign up user.
+
+        Hashes password and adds user to system.
+        """
+
+        hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
+
+        user = User(
+            username=username,
+            password=hashed_pwd,
+            image_url=image_url,
+            firstname=firstname,
+            lastname=lastname,
+            zipcode=zipcode,
+            radius=radius,
+        )
+
+        db.session.add(user)
+        return user
+    
+    @classmethod
+    def authenticate(cls, username, password):
+        """Find user with `username` and `password`.
+
+        This is a class method (call it on the class, not an individual user.)
+        It searches for a user whose password hash matches this password
+        and, if it finds such a user, returns that user object.
+
+        If can't find matching user (or if password is wrong), returns False.
+        """
+
+        user = cls.query.filter_by(username=username).first()
+
+        if user:
+            is_auth = bcrypt.check_password_hash(user.password, password)
+            if is_auth:
+                return user
+
+        return False
+
+
+def connect_db(app):
+    """Connect this database to provided Flask app.
+
+    You should call this in your Flask app.
+    """
+
+    db.app = app
+    db.init_app(app)
