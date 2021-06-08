@@ -26,9 +26,11 @@ from app import app
 
 db.create_all()
 
+default_img="/static/images/warbler-hero.jpg"
+
 user1 = {   
             'username':"testuser1",
-            'password':"HASHED_PASSWORD",
+            'password':"password",
             'firstname':"test1",
             'lastname':"test11",
             'zipcode':'12345',
@@ -37,7 +39,7 @@ user1 = {
 
 user2 = {
             'username':"testuser2",
-            'password':"HASHED_PASSWORD",
+            'password':"password2",
             'firstname':"test2",
             'lastname':"test22",
             'zipcode':'56789',
@@ -53,10 +55,8 @@ class UserModelTestCase(TestCase):
     def setUp(self):
         """Create test client, add sample data."""
 
-        User.query.delete()
-        Like.query.delete()
-        View.query.delete()
-        Match.query.delete()
+        db.drop_all()
+        db.create_all()
 
         self.client = app.test_client()
     
@@ -88,7 +88,7 @@ class UserModelTestCase(TestCase):
         res = f"<User #{user.id}: testuser1, test1, test11, 12345>"
         self.assertEqual(user.__repr__(), res)
 
-
+### Liking Tests ###
     def test_user_is_liking_False(self):
         """ Does is_following successfully detect when user1 is not liking user2 """
         u1 = User(**user1)
@@ -111,3 +111,50 @@ class UserModelTestCase(TestCase):
         db.session.commit()
 
         self.assertTrue((u1.is_liked_by(u2)))
+
+### Test Signup ###
+    def test_valid_signup(self):
+        u_test = User.signup(**user1)
+        uid = 99999
+        u_test.id = uid
+        db.session.commit()
+
+        u_test = User.query.get(uid)
+        self.assertIsNotNone(u_test)
+        self.assertEqual(u_test.username, "testuser1")
+        self.assertEqual(u_test.firstname, "test1")
+        self.assertEqual(u_test.lastname, "test11")
+        self.assertEqual(u_test.zipcode, "12345")
+        self.assertEqual(u_test.radius, 5)
+        self.assertEqual(u_test.image_url, default_img)
+        self.assertNotEqual(u_test.password, "password")
+        # Bcrypt strings should start with $2b$
+        self.assertTrue(u_test.password.startswith("$2b$")) 
+
+    def test_invalid_username_signup(self):
+        invalid = User.signup(None, "password", "firstname","lastname", "zipcode", 1)
+        uid = 123456789
+        invalid.id = uid
+        with self.assertRaises(IntegrityError) as context:
+            db.session.commit()
+    
+    def test_invalid_password_signup(self):
+        with self.assertRaises(ValueError) as context:
+            User.signup("username", "", "firstname","lastname", "zipcode", 1)
+
+
+### Test Authenticate ###
+    def test_valid_authentication(self):
+        u = User.signup(**user1)
+
+        user_authenticate = User.authenticate(u.username, "password")
+        self.assertTrue(user_authenticate)
+        self.assertEqual(user_authenticate.username, 'testuser1')
+    
+    def test_invalid_username(self):
+        u = User.signup(**user1)
+        self.assertFalse(User.authenticate("badusername", "password"))
+
+    def test_wrong_password(self):
+        u = User.signup(**user1)
+        self.assertFalse(User.authenticate(u.username, "badpassword"))
