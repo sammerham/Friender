@@ -152,8 +152,7 @@ class User(db.Model) :
     )
 
     def __repr__(self):
-        return f"""<User #{self.id}: {self.username}, {self.firstname}, 
-        {self.lastname}, {self.zipcode}>"""
+        return f"<User #{self.id}: {self.username}, {self.firstname}, {self.lastname}, {self.zipcode}>"
         
 
     def is_liked_by(self, other_user):
