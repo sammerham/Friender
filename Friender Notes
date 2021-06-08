@@ -1,0 +1,109 @@
+
+Database 
+    - Users: id, username, hashedpassword, firstName, lastName, zipcode, radius
+        image(AWS path), hobbies, interests
+    - Likes: like_id, liker_id(foreign key), likee_id(foreign key)
+    - Matches: match_id, user1_id(foreign key), user2_id(foreign key)
+    - SeenProfile? : seen_id, seeer_id, seenee_id
+    - Messages?? : msg_id, sending_id, receiving_id, message
+ - SQL Alchemy - for the user to user relationships / db management
+
+Backend - Flask (API Returning JSON)
+ - Routes:
+    - Auth:
+        - login (post) --> return session
+        - register (post) --> return session
+    - User:
+        - post (new register)
+        - get (id)
+        - patch (id)
+        - getByRadius () ORDER BY random (match by zipcode {WHERE})
+        - delete (id)
+            
+        *** option to upload photo (AWS s3)
+    - Likes:
+        - post
+        - get
+    - Matches 
+        - post (new match)
+        - get (user_id)
+        - delete (match_id) - delete match and single like_id
+
+    - SeenProfile
+        - post (seeer_id, seen_id)
+        - get (seeer_id)
+
+    - Messages??
+
+
+Frontend - React (Uses API JSON to render app)
+    Component Design:
+     - App (state: currentUser)
+        - NavBar 
+        - Routes (dependent on if user logged-in) Logout
+            - Homepage ( 2 very different page) --> UserProfile
+            - LoginForm
+            - RegisterForm
+            - ProfileForm
+            - Likes --> UserCard --> UserProfile
+            - Matches --> --> UserList --> UserCard --> UserProfile
+            - Messages?? --> {MessageCard, MessageForm}
+        Components:
+            - UserCard
+            - UserProfile
+            - UserList
+            - MessageCard
+            - MessageForm
+            - Alert/Error
+        
+    API File:
+        - methods to backend;
+        
+    Context:
+        - currentUser
+
+Things of note:
+ - How to calculate distance between zip codes (Library??)
+
+Timeline:
+
+Tuesday Afternoon: 
+    - Database setup / ORM models
+    - accounts for AWS
+    - query in PSQL testing
+    - add test for db.model
+
+Wednesday Morning/Afternoon:
+    - Backend
+        - Routes: (Return JSON)
+            - Auth --> Register, Login, 
+            - User --> Post, Get, Patch, Delete
+            - Seen --> Post, Get
+            - Like --> Post, Get
+            - Matches --> Post, Get, Delete
+        - g object
+            @app.beforerequest setup for session/token & current user
+        - Add tests for routes
+
+Thursday Morning: 
+    - Frontend 
+        - React --> Low-level Components
+            - UserCard, UserList, UserProfile
+            - Auth --> LoginForm, RegisterForm
+            - ProfileForm
+        - Add Testing for above
+
+Thursday Afternoon:
+    - Frontend  
+        - React --> HighLevel Components
+            - Homepage
+            - Likes, Matches
+        - Add Testing
+
+Friday Morning: 
+    - Clean-up css
+    - Deploy
+        
+
+
+
