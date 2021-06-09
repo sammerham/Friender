@@ -32,6 +32,7 @@ connect_db(app)
 
 #################################################################
 
+
 @app.before_request
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
@@ -57,6 +58,7 @@ def do_logout():
 
 # def upload_file(file_name, bucket, object_name=None):
 
+
 def upload_file():
     """Upload a file to an S3 bucket
 
@@ -73,7 +75,15 @@ def upload_file():
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file("download.jpeg", "friender-images" , 'download55.jpeg')
+        # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
+        s3_client.upload_file(
+            Filename="download.jpeg",
+            Bucket='friender-profile-images',
+            Key='download5.jpeg',
+            ExtraArgs={
+                "ContentType": "image/jpeg"
+            }
+        )
         # data = open('download.jpeg', 'rb')
         # s3_client.Bucket('friender-images').put_object(Key='download.jpeg', Body=data)
     except ClientError as e:
@@ -86,12 +96,11 @@ def upload_file():
 # s3.Bucket('my-bucket').put_object(Key='test.jpg', Body=data)
 
 
-
-
 @app.route('/aws')
 def aws():
     upload_file()
     return jsonify(message="Deleted")
+
 
 @app.route('/signup', methods=["POST"])
 def signup():
@@ -110,16 +119,16 @@ def signup():
     lastname = request.json["lastname"]
     zipcode = request.json["zipcode"]
     radius = request.json["radius"]
-   
-    try:   
+
+    try:
         user = User.signup(
-        username=username,
-        password=password,
-        firstname=firstname,
-        lastname=lastname,
-        zipcode=zipcode,
-        radius=radius
-    )
+            username=username,
+            password=password,
+            firstname=firstname,
+            lastname=lastname,
+            zipcode=zipcode,
+            radius=radius
+        )
         db.session.add(user)
         db.session.commit()
 
@@ -130,6 +139,7 @@ def signup():
 
     except IntegrityError as e:
         return (jsonify(Error="Bad Request Error"), 400)
+
 
 @app.route('/login', methods=["POST"])
 def login():
@@ -155,7 +165,7 @@ def login():
         serialized = user.serialize()
         # Return w/status code 201 --- return tuple (json, status)
         return(jsonify(user=serialized), 200)
-    
+
     else:
         return (jsonify(Error="Invalid username or password"), 400)
 
@@ -164,6 +174,7 @@ def login():
 # User:
 #     - getByZipcode() ORDER BY random (match by zipcode {WHERE})
 
+
 @app.route('/users/<int:user_id>')
 def get_user(user_id):
     """Get data about a single user.
@@ -171,12 +182,13 @@ def get_user(user_id):
         Respond with JSON like: {user: 
         {id, username, firstname, lastname, zipcode, radius, hobbies, interests}}.
     """
-    
+
     user = User.query.get_or_404(user_id)
 
     serialized = user.serialize()
 
     return jsonify(user=serialized)
+
 
 @app.route('/users/<int:user_id>', methods=["PATCH"])
 def update_user(user_id):
@@ -185,7 +197,7 @@ def update_user(user_id):
         Respond with JSON like: {user: 
         {id, username, firstname, lastname, zipcode, radius, hobbies, interests}}.
     """
-    
+
     user = User.query.get_or_404(user_id)
 
     username = request.json['username']
@@ -197,7 +209,7 @@ def update_user(user_id):
     interests = request.json['interests']
 
     user.username = username
-    user.firstname  = firstname
+    user.firstname = firstname
     user.lastname = lastname
     user.zipcode = zipcode
     user.radius = radius
@@ -208,6 +220,7 @@ def update_user(user_id):
     serialized = user.serialize()
 
     return jsonify(user=serialized)
+
 
 @app.route('/users/<int:user_id>', methods=["DELETE"])
 def delete_user(user_id):
@@ -224,7 +237,6 @@ def delete_user(user_id):
     return jsonify(message="Deleted")
 
 
-
 @app.route('/users/<int:user_id>/zipcode')
 def get_random_user_by_zipcode(user_id):
     """Get data about a single user.
@@ -232,7 +244,7 @@ def get_random_user_by_zipcode(user_id):
         Respond with JSON like: {user: 
         {id, username, firstname, lastname, zipcode, radius, hobbies, interests}}.
     """
-    
+
     user = User.getUserByZipcode(user_id)
 
     serialized = user.serialize()
