@@ -236,7 +236,6 @@ class User(db.Model) :
 
 # todo check on edge cases with getting user by zipcode.  
 
-
 def connect_db(app):
     """Connect this database to provided Flask app.
 

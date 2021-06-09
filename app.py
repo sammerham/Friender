@@ -2,10 +2,16 @@ import os
 
 from flask import Flask, request, redirect, render_template, session, jsonify, g
 from flask_debugtoolbar import DebugToolbarExtension
-
+import logging
 from sqlalchemy.exc import IntegrityError
-
+from botocore.exceptions import ClientError
 from models import db, connect_db, User, Like, View, Match
+import boto3
+# Let's use Amazon S3
+s3 = boto3.resource('s3')
+# Print out bucket names
+for bucket in s3.buckets.all():
+    print(bucket.name)
 
 app = Flask(__name__)
 
@@ -48,6 +54,44 @@ def do_logout():
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
+
+# def upload_file(file_name, bucket, object_name=None):
+
+def upload_file():
+    """Upload a file to an S3 bucket
+
+    :param file_name: File to upload
+    :param bucket: Bucket to upload to
+    :param object_name: S3 object name. If not specified then file_name is used
+    :return: True if file was uploaded, else False
+    """
+
+    # # If S3 object_name was not specified, use file_name
+    # if object_name is None:
+    #     object_name = file_name
+
+    # Upload the file
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.upload_file("download.jpeg", "friender-images" , 'download12.jpeg')
+        # data = open('download.jpeg', 'rb')
+        # s3_client.Bucket('friender-images').put_object(Key='download.jpeg', Body=data)
+    except ClientError as e:
+        logging.error(e)
+        return False
+    return True
+
+
+# data = open('test.jpg', 'rb')
+# s3.Bucket('my-bucket').put_object(Key='test.jpg', Body=data)
+
+
+
+
+@app.route('/aws')
+def aws():
+    upload_file()
+    return jsonify(message="Deleted")
 
 @app.route('/signup', methods=["POST"])
 def signup():
