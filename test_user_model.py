@@ -5,7 +5,7 @@
 import os
 from unittest import TestCase
 
-from models import db, User, Like, View, Match
+from models import db, User
 from sqlalchemy.exc import IntegrityError
 
 
