@@ -151,8 +151,21 @@ class User(db.Model) :
         secondaryjoin=(Match.match_from_id== id)
     )
 
+    def serialize(self):
+        """Serialize to dictionary."""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "zipcode": self.zipcode,
+            "radius": self.radius,
+            "hobbies": self.hobbies,
+            "interests": self.interests
+        }
+
     def __repr__(self):
-        return f"<User #{self.id}: {self.username}, {self.firstname}, {self.lastname}, {self.zipcode}>"
+        return f"<User #{self.id}: {self.username}, {self.password} {self.firstname}, {self.lastname}, {self.zipcode}>"
         
 
     def is_liked_by(self, other_user):
@@ -203,12 +216,22 @@ class User(db.Model) :
 
         user = cls.query.filter_by(username=username).first()
 
+        print("User --->", user)
+
         if user:
             is_auth = bcrypt.check_password_hash(user.password, password)
             if is_auth:
                 return user
 
         return False
+
+    # @classmethod
+    # def getUsersByZipcode(cls, user_id):
+    #     """Find users within same zipcode of this user`."""
+
+    #     current_user = cls.query.get(user_id)
+
+    #     users = User.query.filter(User.zipcode == current_user.zipcode).order_by('random')
 
 
 def connect_db(app):
