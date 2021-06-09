@@ -1,5 +1,6 @@
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from  sqlalchemy.sql.expression import func
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -225,13 +226,15 @@ class User(db.Model) :
 
         return False
 
-    # @classmethod
-    # def getUsersByZipcode(cls, user_id):
-    #     """Find users within same zipcode of this user`."""
+    @classmethod
+    def getUserByZipcode(cls, user_id):
+        """Find user within same zipcode of this user`."""
+        current_user = cls.query.get(user_id)
+        user = User.query.filter(User.zipcode == current_user.zipcode).order_by(func.random()).first()
+        if(user.id != user_id):
+            return user
 
-    #     current_user = cls.query.get(user_id)
-
-    #     users = User.query.filter(User.zipcode == current_user.zipcode).order_by('random')
+# todo check on edge cases with getting user by zipcode.  
 
 
 def connect_db(app):

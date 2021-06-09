@@ -179,16 +179,18 @@ def delete_user(user_id):
 
     return jsonify(message="Deleted")
 
-# @app.route('/users/<int:user_id>')
-# def get_user(user_id):
-#     """Get data about a single user.
 
-#         Respond with JSON like: {user: 
-#         {id, username, firstname, lastname, zipcode, radius, hobbies, interests}}.
-#     """
+
+@app.route('/users/<int:user_id>/zipcode')
+def get_random_user_by_zipcode(user_id):
+    """Get data about a single user.
+
+        Respond with JSON like: {user: 
+        {id, username, firstname, lastname, zipcode, radius, hobbies, interests}}.
+    """
     
-#     user = User.query.get_or_404(user_id)
+    user = User.getUserByZipcode(user_id)
 
-#     serialized = user.serialize()
+    serialized = user.serialize()
 
-#     return jsonify(user=serialized)
+    return jsonify(user=serialized)
