@@ -73,7 +73,7 @@ def upload_file():
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file("download.jpeg", "friender-images" , 'download12.jpeg')
+        response = s3_client.upload_file("download.jpeg", "friender-images" , 'download55.jpeg')
         # data = open('download.jpeg', 'rb')
         # s3_client.Bucket('friender-images').put_object(Key='download.jpeg', Body=data)
     except ClientError as e:
