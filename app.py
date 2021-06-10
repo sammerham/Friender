@@ -77,7 +77,7 @@ def upload_file(file):
         # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
         s3.upload_fileobj(
             file,
-            'friender-profile-images',
+            'friender-images',
             file.filename,
             ExtraArgs={
                 "ContentType": 'image/jpeg',
@@ -95,7 +95,7 @@ def upload_file(file):
 @app.route('/aws', methods=["POST"])
 @cross_origin()
 def aws():
-
+    return('ok')
     file = request.files["file"]
     # data = open(file, 'rb')
     file.filename = 'testaws'
