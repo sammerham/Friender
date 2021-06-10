@@ -78,8 +78,8 @@ def upload_file():
         # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
         s3_client.upload_file(
             Filename="download.jpeg",
-            Bucket='friender-profile-images',
-            Key='download5.jpeg',
+            Bucket='friender-images',
+            Key='download9.jpeg',
             ExtraArgs={
                 "ContentType": "image/jpeg"
             }
