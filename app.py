@@ -7,13 +7,19 @@ from sqlalchemy.exc import IntegrityError
 from botocore.exceptions import ClientError
 from models import db, connect_db, User, Like, View, Match
 import boto3
+from flask_cors import CORS, cross_origin
+
+from config import S3_BUCKET, S3_KEY, S3_SECRET, S3_LOCATION
+
 # Let's use Amazon S3
-s3 = boto3.resource('s3')
-# Print out bucket names
-for bucket in s3.buckets.all():
-    print(bucket.name)
+s3 = boto3.client(
+   "s3",
+   aws_access_key_id=S3_KEY,
+   aws_secret_access_key=S3_SECRET
+)
 
 app = Flask(__name__)
+
 
 CURR_USER_KEY = "curr_user"
 
@@ -59,50 +65,48 @@ def do_logout():
 # def upload_file(file_name, bucket, object_name=None):
 
 
-def upload_file():
+def upload_file(file):
     """Upload a file to an S3 bucket
 
-    :param file_name: File to upload
-    :param bucket: Bucket to upload to
-    :param object_name: S3 object name. If not specified then file_name is used
+    :param file: to upload
     :return: True if file was uploaded, else False
     """
 
-    # # If S3 object_name was not specified, use file_name
-    # if object_name is None:
-    #     object_name = file_name
-
     # Upload the file
-    s3_client = boto3.client('s3')
     try:
         # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
-        s3_client.upload_file(
-            Filename="download.jpeg",
-            Bucket='friender-images',
-            Key='download9.jpeg',
+        s3.upload_fileobj(
+            file,
+            'friender-profile-images',
+            file.filename,
             ExtraArgs={
-                "ContentType": "image/jpeg"
+                "ContentType": 'image/jpeg',
+                "ACL": "public-read"
             }
         )
-        # data = open('download.jpeg', 'rb')
-        # s3_client.Bucket('friender-images').put_object(Key='download.jpeg', Body=data)
-    except ClientError as e:
-        logging.error(e)
+
+    except Exception as e:
+        print("error --> ", e)
         return False
-    return True
+
+    return f'http://friender-profile-images.s3.amazonaws.com/{file.filename}'
 
 
-# data = open('test.jpg', 'rb')
-# s3.Bucket('my-bucket').put_object(Key='test.jpg', Body=data)
-
-
-@app.route('/aws')
+@app.route('/aws', methods=["POST"])
+@cross_origin()
 def aws():
-    upload_file()
-    return jsonify(message="Deleted")
+
+    file = request.files["file"]
+    # data = open(file, 'rb')
+    file.filename = 'testaws'
+    image_url = upload_file(file)
+
+    response = jsonify(image_url)
+    return response
 
 
 @app.route('/signup', methods=["POST"])
+@cross_origin()
 def signup():
     """Handle user signup.
 

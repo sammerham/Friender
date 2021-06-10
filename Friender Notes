@@ -52,7 +52,7 @@ Frontend - React (Uses API JSON to render app)
             - UserCard
             - UserProfile
             - UserList
-            - MessageCard
+            - MessageCardgit sta
             - MessageForm
             - Alert/Error
         
