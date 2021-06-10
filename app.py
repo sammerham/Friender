@@ -19,7 +19,7 @@ s3 = boto3.client(
 )
 
 app = Flask(__name__)
-CORS(app)
+
 
 CURR_USER_KEY = "curr_user"
 
@@ -80,7 +80,8 @@ def upload_file(file):
             'friender-profile-images',
             file.filename,
             ExtraArgs={
-                "ContentType": 'image/jpeg'
+                "ContentType": 'image/jpeg',
+                "ACL": "public-read"
             }
         )
 
@@ -101,11 +102,11 @@ def aws():
     image_url = upload_file(file)
 
     response = jsonify(image_url)
-    response.headers.add("Access-Control-Allow-Origin", "*")
     return response
 
 
 @app.route('/signup', methods=["POST"])
+@cross_origin()
 def signup():
     """Handle user signup.
 
