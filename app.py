@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from botocore.exceptions import ClientError
 from models import db, connect_db, User, Like, View, Match
 import boto3
+from flask_cors import CORS, cross_origin
 
 from config import S3_BUCKET, S3_KEY, S3_SECRET, S3_LOCATION
 
@@ -18,6 +19,7 @@ s3 = boto3.client(
 )
 
 app = Flask(__name__)
+CORS(app)
 
 CURR_USER_KEY = "curr_user"
 
@@ -69,15 +71,14 @@ def upload_file(file):
     :param file: to upload
     :return: True if file was uploaded, else False
     """
-    print("file --> ", file)
 
     # Upload the file
     try:
         # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
-        s3.upload_file(
-            Filename=file.name,
-            Bucket='friender-profile-images',
-            Key=file.name,
+        s3.upload_fileobj(
+            file,
+            'friender-profile-images',
+            file.filename,
             ExtraArgs={
                 "ContentType": 'image/jpeg'
             }
@@ -87,15 +88,21 @@ def upload_file(file):
         print("error --> ", e)
         return False
 
-    return f'http://friender-profile-images.s3.amazonaws.com/{file.name}'
+    return f'http://friender-profile-images.s3.amazonaws.com/{file.filename}'
 
 
-@app.route('/aws')
+@app.route('/aws', methods=["POST"])
+@cross_origin()
 def aws():
-    data = open('download.jpeg', 'rb')
-    image_url = upload_file(data)
 
-    return jsonify(image_url)
+    file = request.files["file"]
+    # data = open(file, 'rb')
+    file.filename = 'testaws'
+    image_url = upload_file(file)
+
+    response = jsonify(image_url)
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 
 @app.route('/signup', methods=["POST"])
