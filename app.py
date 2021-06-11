@@ -95,10 +95,12 @@ def upload_file(file):
 @app.route('/aws', methods=["POST"])
 @cross_origin()
 def aws():
-    return('ok')
+    
+    print("request", request.files)
     file = request.files["file"]
+    
     # data = open(file, 'rb')
-    file.filename = 'testaws'
+    file.filename = 'testaws123'
     image_url = upload_file(file)
 
     response = jsonify(image_url)
