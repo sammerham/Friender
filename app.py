@@ -9,7 +9,7 @@ from models import db, connect_db, User, Like, View, Match
 import boto3
 from flask_cors import CORS, cross_origin
 
-from config import S3_BUCKET, S3_KEY, S3_SECRET, S3_LOCATION
+from config import S3_BUCKET, S3_KEY, S3_SECRET, S3_LOCATION, SECRET_KEY
 
 # Let's use Amazon S3
 s3 = boto3.client(
@@ -31,7 +31,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
+app.config['SECRET_KEY'] = SECRET_KEY
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
@@ -40,29 +40,9 @@ connect_db(app)
 
 
 @app.before_request
-def add_user_to_g():
-    """If we're logged in, add curr user to Flask global."""
-
-    if CURR_USER_KEY in session:
-        g.user = User.query.get(session[CURR_USER_KEY])
-
-    else:
-        g.user = None
+    
 
 
-def do_login(user):
-    """Log in user."""
-
-    session[CURR_USER_KEY] = user.id
-
-
-def do_logout():
-    """Logout user."""
-
-    if CURR_USER_KEY in session:
-        del session[CURR_USER_KEY]
-
-# def upload_file(file_name, bucket, object_name=None):
 
 
 def upload_file(file):
@@ -138,10 +118,9 @@ def signup():
         db.session.add(user)
         db.session.commit()
 
-        do_login(user)
-        serialized = user.serialize()
-        # Return w/status code 201 --- return tuple (json, status)
-        return(jsonify(user=serialized), 201)
+        token = User.encode_auth_token(user.id)
+        return jsonify(({"token": token}), 201)
+     
 
     except IntegrityError as e:
         return (jsonify(Error="Bad Request Error"), 400)
@@ -167,11 +146,8 @@ def login():
     )
 
     if user:
-        do_login(user)
-        serialized = user.serialize()
-        # Return w/status code 201 --- return tuple (json, status)
-        return(jsonify(user=serialized), 200)
-
+        token = User.encode_auth_token(user.id)
+        return jsonify(({"token": token}), 201)
     else:
         return (jsonify(Error="Invalid username or password"), 400)
 

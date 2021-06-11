@@ -1,6 +1,8 @@
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from  sqlalchemy.sql.expression import func
+from flask_jwt import JWT
+from config import SECRET_KEY
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -233,6 +235,40 @@ class User(db.Model) :
         user = User.query.filter(User.zipcode == current_user.zipcode).order_by(func.random()).first()
         if(user.id != user_id):
             return user
+
+
+    @classmethod
+    def encode_auth_token(self, user_id):
+        """ 
+        Generates the Auth Token
+        :return: string
+        """
+        try:
+            payload = {
+                'id': user_id
+            }
+            return JWT.encode(
+                payload,
+                SECRET_KEY,
+                algorithm='HS256'
+        )
+        except Exception as e:
+            return e
+
+
+    @classmethod
+    def decode_auth_token(auth_token):
+        """
+        Decodes the auth token
+        :param auth_token:
+        :return: integer|string
+        """
+        try:
+            payload = JWT.decode(auth_token, SECRET_KEY)
+            return payload['id']
+
+        except JWT.InvalidTokenError:
+            return 'Invalid token. Please log in again.'
 
 # todo check on edge cases with getting user by zipcode.  
 
