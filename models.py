@@ -1,14 +1,15 @@
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from  sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func
 from flask_jwt import JWT
 from config import SECRET_KEY
+import jwt
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
 
-class Like(db.Model) :
+class Like(db.Model):
     """Connection of a liker <-> liked_user."""
     __tablename__ = 'likes'
     user_being_liked_id = db.Column(
@@ -17,14 +18,14 @@ class Like(db.Model) :
         primary_key=True,
     )
 
-    user_liking_id= db.Column(
+    user_liking_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
     )
 
 
-class Match(db.Model) :
+class Match(db.Model):
     """Connection of a user1 matches <-> user2 matches."""
     __tablename__ = 'matches'
 
@@ -34,14 +35,14 @@ class Match(db.Model) :
         primary_key=True,
     )
 
-    match_from_id= db.Column(
+    match_from_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
     )
 
 
-class View(db.Model) :
+class View(db.Model):
     """Connection of a viewer <-> viewed_user."""
 
     __tablename__ = 'views'
@@ -52,14 +53,16 @@ class View(db.Model) :
         primary_key=True,
     )
 
-    user_viewing_id= db.Column(
+    user_viewing_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
     )
 
 # TODO add model methods
-class User(db.Model) :
+
+
+class User(db.Model):
     """User in the system."""
     __tablename__ = 'users'
 
@@ -81,9 +84,9 @@ class User(db.Model) :
 
     firstname = db.Column(
         db.Text,
-        nullable=False,   
+        nullable=False,
     )
-    
+
     lastname = db.Column(
         db.Text,
         nullable=False,
@@ -106,7 +109,7 @@ class User(db.Model) :
         db.Text,
     )
 
-    image_url = db.Column(  #TODO figure out how to use AWS to store image
+    image_url = db.Column(  # TODO figure out how to use AWS to store image
         db.Text,
         default="/static/images/warbler-hero.jpg"
     )
@@ -114,21 +117,20 @@ class User(db.Model) :
     likers = db.relationship(
         "User",
         secondary="likes",
-        primaryjoin=(Like.user_being_liked_id== id),
+        primaryjoin=(Like.user_being_liked_id == id),
         secondaryjoin=(Like.user_liking_id == id)
     )
     liking = db.relationship(
         "User",
         secondary="likes",
-        primaryjoin=(Like.user_liking_id== id),
+        primaryjoin=(Like.user_liking_id == id),
         secondaryjoin=(Like.user_being_liked_id == id)
     )
-
 
     viewers = db.relationship(
         "User",
         secondary="views",
-        primaryjoin=(View.user_being_viewed_id== id),
+        primaryjoin=(View.user_being_viewed_id == id),
         secondaryjoin=(View.user_viewing_id == id)
     )
 
@@ -139,19 +141,18 @@ class User(db.Model) :
         secondaryjoin=(View.user_being_viewed_id == id)
     )
 
-
     matchers = db.relationship(
         "User",
         secondary="matches",
         primaryjoin=(Match.match_from_id == id),
-        secondaryjoin =(Match.match_to_id == id)
+        secondaryjoin=(Match.match_to_id == id)
     )
 
     matching = db.relationship(
         "User",
         secondary="matches",
         primaryjoin=(Match.match_to_id == id),
-        secondaryjoin=(Match.match_from_id== id)
+        secondaryjoin=(Match.match_from_id == id)
     )
 
     def serialize(self):
@@ -169,7 +170,6 @@ class User(db.Model) :
 
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.password} {self.firstname}, {self.lastname}, {self.zipcode}>"
-        
 
     def is_liked_by(self, other_user):
         """Is this user liked by `other_user`?"""
@@ -186,7 +186,7 @@ class User(db.Model) :
         return len(found_user_list) == 1
 
     @classmethod
-    def signup(cls, username, password, firstname, lastname, zipcode, radius ):
+    def signup(cls, username, password, firstname, lastname, zipcode, radius):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -205,7 +205,7 @@ class User(db.Model) :
 
         db.session.add(user)
         return user
-    
+
     @classmethod
     def authenticate(cls, username, password):
         """Find user with `username` and `password`.
@@ -232,10 +232,10 @@ class User(db.Model) :
     def getUserByZipcode(cls, user_id):
         """Find user within same zipcode of this user`."""
         current_user = cls.query.get(user_id)
-        user = User.query.filter(User.zipcode == current_user.zipcode).order_by(func.random()).first()
+        user = User.query.filter(User.zipcode == current_user.zipcode).order_by(
+            func.random()).first()
         if(user.id != user_id):
             return user
-
 
     @classmethod
     def encode_auth_token(self, user_id):
@@ -247,30 +247,30 @@ class User(db.Model) :
             payload = {
                 'id': user_id
             }
-            return JWT.encode(
+            encoded_jwt = jwt.encode(
                 payload,
-                SECRET_KEY,
-                algorithm='HS256'
-        )
+                SECRET_KEY)
+            token = encoded_jwt.decode("utf-8")
+            return token
         except Exception as e:
             return e
 
+    # @classmethod
+    # def decode_auth_token(auth_token):
+    #     """
+    #     Decodes the auth token
+    #     :param auth_token:
+    #     :return: integer|string
+    #     """
+    #     try:
+    #         payload = JWT.decode(auth_token, SECRET_KEY)
+    #         return payload['id']
 
-    @classmethod
-    def decode_auth_token(auth_token):
-        """
-        Decodes the auth token
-        :param auth_token:
-        :return: integer|string
-        """
-        try:
-            payload = JWT.decode(auth_token, SECRET_KEY)
-            return payload['id']
+    #     except JWT.InvalidTokenError:
+    #         return 'Invalid token. Please log in again.'
 
-        except JWT.InvalidTokenError:
-            return 'Invalid token. Please log in again.'
+# todo check on edge cases with getting user by zipcode.
 
-# todo check on edge cases with getting user by zipcode.  
 
 def connect_db(app):
     """Connect this database to provided Flask app.

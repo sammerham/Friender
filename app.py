@@ -13,9 +13,9 @@ from config import S3_BUCKET, S3_KEY, S3_SECRET, S3_LOCATION, SECRET_KEY
 
 # Let's use Amazon S3
 s3 = boto3.client(
-   "s3",
-   aws_access_key_id=S3_KEY,
-   aws_secret_access_key=S3_SECRET
+    "s3",
+    aws_access_key_id=S3_KEY,
+    aws_secret_access_key=S3_SECRET
 )
 
 app = Flask(__name__)
@@ -39,11 +39,7 @@ connect_db(app)
 #################################################################
 
 
-@app.before_request
-    
-
-
-
+# @app.before_request
 
 def upload_file(file):
     """Upload a file to an S3 bucket
@@ -54,7 +50,6 @@ def upload_file(file):
 
     # Upload the file
     try:
-        # response = s3_client.upload_file("download.jpeg", "friender-profile-images" , 'download.jpeg')
         s3.upload_fileobj(
             file,
             'friender-images',
@@ -75,10 +70,10 @@ def upload_file(file):
 @app.route('/aws', methods=["POST"])
 @cross_origin()
 def aws():
-    
+
     print("request", request.files)
     file = request.files["file"]
-    
+
     # data = open(file, 'rb')
     file.filename = 'testaws123'
     image_url = upload_file(file)
@@ -119,14 +114,14 @@ def signup():
         db.session.commit()
 
         token = User.encode_auth_token(user.id)
-        return jsonify(({"token": token}), 201)
-     
+        return jsonify(token = token), 201
 
     except IntegrityError as e:
         return (jsonify(Error="Bad Request Error"), 400)
 
 
 @app.route('/login', methods=["POST"])
+@cross_origin()
 def login():
     """Handle user login.
 
@@ -147,7 +142,7 @@ def login():
 
     if user:
         token = User.encode_auth_token(user.id)
-        return jsonify(({"token": token}), 201)
+        return jsonify(token=token), 201
     else:
         return (jsonify(Error="Invalid username or password"), 400)
 
